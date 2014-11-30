@@ -2,15 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2014-11-30 22:59 +0000
-
-returns an rss feed of the past broadcasts of the channel
-
-GET options
-   channel
-      name of the twitch channel
-   limit
-      max number of rss items to show
+  update: 2014-11-30 23:19 +0000
 *******************************************************************************/
 
 
@@ -21,6 +13,9 @@ error_reporting(0);
 mb_internal_encoding('utf-8');
 
 
+
+
+/******************************************************************************/
 $CFG_TIME = time();
 
 $CFG_LIMIT_DEFAULT = 30;
