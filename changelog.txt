@@ -1,3 +1,7 @@
+2014-12-02 14:48 +0000
+   - added key protection
+   - updated readme
+
 2014-11-30 23:19 +0000
    - added readme
 

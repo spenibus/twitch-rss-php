@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2014-11-30 23:19 +0000
+  update: 2014-12-02 14:48 +0000
 *******************************************************************************/
 
 
@@ -18,13 +18,12 @@ mb_internal_encoding('utf-8');
 /******************************************************************************/
 $CFG_TIME = time();
 
-$CFG_LIMIT_DEFAULT = 30;
+$CFG_DIR_CACHE  = './cache/';
+$CFG_DIR_CONFIG = './config/';
 
 $CFG_CACHE_AGE_MAX = 300;
-$CFG_CACHE_DIR     = './cache/';
 
-$GET_CHANNEL = $_GET['channel'];
-$GET_LIMIT   = $_GET['limit'];
+$CFG_LIMIT_DEFAULT = 30;
 
 
 
@@ -51,13 +50,13 @@ function durationFormat($length=0) {
 /****************************************************** clean old cache files */
 function cacheClean() {
 
-   global $CFG_CACHE_DIR, $CFG_TIME;
+   global $CFG_DIR_CACHE, $CFG_TIME;
 
-   $d = opendir($CFG_CACHE_DIR);
+   $d = opendir($CFG_DIR_CACHE);
    while(false !== $fn = readdir($d)) {
 
       // file path
-      $fp = $CFG_CACHE_DIR.$fn;
+      $fp = $CFG_DIR_CACHE.$fn;
 
       // check filename prefix
       if(substr($fn,0,6) != 'cache-') {
@@ -84,7 +83,7 @@ function cacheClean() {
 /***************************************************** fetch url (with cache) */
 function urlFetch($urls=array()) {
 
-   global $CFG_TIME, $CFG_CACHE_DIR, $CFG_CACHE_AGE_MAX;
+   global $CFG_TIME, $CFG_DIR_CACHE, $CFG_CACHE_AGE_MAX;
 
 
    // curl options
@@ -108,7 +107,7 @@ function urlFetch($urls=array()) {
 
       // cache: file name, file path, file age
       $cfn = 'cache-'.sha1($url).'.txt.gz';
-      $cfp = $CFG_CACHE_DIR.$cfn;
+      $cfp = $CFG_DIR_CACHE.$cfn;
       $cfa = $CFG_TIME - (file_exists($cfp) ? filemtime($cfp) : 0);
 
 
@@ -187,7 +186,22 @@ function urlFetch($urls=array()) {
 
 
 /************************************************************** show rss feed */
-if($GET_CHANNEL) {
+if($_GET['channel']) {
+
+   // params
+   $getChannel = $_GET['channel'];
+   $getLimit   = $_GET['limit'];
+   $getKey     = $_GET['key'];
+
+
+   // check for key (password)
+   $fileKey = $CFG_DIR_CONFIG.'key.txt';
+   if(is_file($fileKey)) {
+      $cfgKey = file_get_contents($fileKey);
+      if($getKey != $cfgKey) {
+         exit('key is invalid');
+      }
+   }
 
 
    // clean the cache
@@ -195,9 +209,9 @@ if($GET_CHANNEL) {
 
 
    // url params
-   $paramChannel = urlencode($GET_CHANNEL);
-   $paramLimit   = urlencode($GET_LIMIT != null
-      ? (int)$GET_LIMIT
+   $paramChannel = urlencode($getChannel);
+   $paramLimit   = urlencode($getLimit != null
+      ? (int)$getLimit
       : $CFG_LIMIT_DEFAULT
    );
 
