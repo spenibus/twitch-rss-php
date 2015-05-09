@@ -1,4 +1,6 @@
 twitch-rss
+http://spenibus.net
+
 
 returns an rss feed of the past broadcasts of the channel
 
