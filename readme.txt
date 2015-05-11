@@ -1,5 +1,7 @@
 twitch-rss
 http://spenibus.net
+https://github.com/spenibus/twitch-rss-php
+https://gitlab.com/spenibus/twitch-rss-php
 
 
 returns an rss feed of the past broadcasts of the channel
