@@ -236,14 +236,16 @@ if($_GET['channel']) {
 
       //print_r($video);exit();
 
+      $startStamp = strtotime($video['recorded_at']);
+
       $rss_items .= '
       <item>
          <title>'.hsc($video['title']).'</title>
          <link>'.hsc($video['url']).'</link>
-         <pubDate>'.gmdate(DATE_RSS, strtotime($video['recorded_at'])).'</pubDate>
+         <pubDate>'.gmdate(DATE_RSS, $startStamp).'</pubDate>
          <description>'.(
 '<![CDATA[<pre>'.hsc('Video id: '.$video['_id'].'
- Started: '.preg_replace('/[TZ]/u',' ', $video['recorded_at']).'
+ Started: '.gmdate('Y-m-d H:i:s O', $startStamp).'
 Duration: '.durationformat($video['length']).'
     Game: '.$video['game'].'
   Status: '.$video['status'].'
