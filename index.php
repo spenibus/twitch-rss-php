@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2014-12-02 14:48 +0000
+  update: 2015-07-30 18:56 +0000
 *******************************************************************************/
 
 
@@ -233,12 +233,22 @@ if($_GET['channel']) {
    $rss_items = '';
 
    foreach($data['videos']['json']['videos'] as $video) {
+
+      //print_r($video);exit();
+
       $rss_items .= '
       <item>
          <title>'.hsc($video['title']).'</title>
          <link>'.hsc($video['url']).'</link>
          <pubDate>'.gmdate(DATE_RSS, strtotime($video['recorded_at'])).'</pubDate>
-         <description>'.hsc('['.durationformat($video['length']).'] '.$video['description']).'</description>
+         <description>'.(
+'<![CDATA[<pre>'.hsc('Video id: '.$video['_id'].'
+ Started: '.preg_replace('/[TZ]/u',' ', $video['recorded_at']).'
+Duration: '.durationformat($video['length']).'
+    Game: '.$video['game'].'
+  Status: '.$video['status'].'
+'.$video['description']).'</pre>]]>'
+        ).'</description>
          <media:thumbnail url="'.$video['preview'].'"/>
          <media:content url="" duration="'.$video['length'].'"/>
       </item>';
