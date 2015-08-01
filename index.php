@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2015-07-30 18:56 +0000
+  update: 2015-08-01 08:36 +0000
 *******************************************************************************/
 
 
@@ -226,51 +226,62 @@ if($_GET['channel']) {
    );
 
 
-   // fetch urls data
-   $data = urlFetch($urls);
+    // fetch urls data
+    $data = urlFetch($urls);
 
 
-   $rss_items = '';
+    $rss_items = '';
 
-   foreach($data['videos']['json']['videos'] as $video) {
+    foreach($data['videos']['json']['videos'] as $video) {
 
-      //print_r($video);exit();
+        //print_r($video);exit();
 
-      $startStamp = strtotime($video['recorded_at']);
+        // skip if video is still being recorded
+        if($video['status'] == 'recording') {
+            continue;
+        }
 
-      $rss_items .= '
-      <item>
-         <title>'.hsc($video['title']).'</title>
-         <link>'.hsc($video['url']).'</link>
-         <pubDate>'.gmdate(DATE_RSS, $startStamp).'</pubDate>
-         <description>'.(
-'<![CDATA[<pre>'.hsc('Video id: '.$video['_id'].'
- Started: '.gmdate('Y-m-d H:i:s O', $startStamp).'
-Duration: '.durationformat($video['length']).'
-    Game: '.$video['game'].'
-  Status: '.$video['status'].'
-'.$video['description']).'</pre>]]>'
-        ).'</description>
-         <media:thumbnail url="'.$video['preview'].'"/>
-         <media:content url="" duration="'.$video['length'].'"/>
-      </item>';
-   }
+        // timestamp of recording start
+        $startStamp = strtotime($video['recorded_at']);
+
+        // build item
+        $rss_items .= '
+        <item>
+            <title>'.hsc($video['title']).'</title>
+            <link>'.hsc($video['url']).'</link>
+            <pubDate>'.gmdate(DATE_RSS, $startStamp).'</pubDate>
+            <description>'.(
+'<![CDATA[<pre>'.hsc('   Video id: '.$video['_id'].'
+    Started: '.gmdate('Y-m-d H:i:s O', $startStamp).'
+   Duration: '.durationformat($video['length']).'
+     Status: '.$video['status'].'
+
+      Title: '.$video['title'].'
+       Game: '.$video['game'].'
+Description: '.$video['description']).'</pre>
+
+<img src="'.$video['preview'].'" alt="preview"/>]]>'
+         ).'</description>
+            <media:thumbnail url="'.hsc($video['preview']).'"/>
+            <media:content url="" duration="'.hsc($video['length']).'"/>
+        </item>';
+    }
 
 
-   $rss = '<?xml version="1.0" encoding="UTF-8" ?>
+    $rss = '<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
-   <channel>
-      <title>'.hsc('twitch.tv - '.$data['users']['json']['display_name']).'</title>
-      <description>'.hsc($data['users']['json']['bio']).'</description>
-      <pubDate>'.gmdate(DATE_RSS).'</pubDate>
-      <link>'.hsc($data['channels']['json']['url']).'</link>
-      <image>
-         <url>'.hsc($data['users']['json']['logo']).'</url>
-         <title>'.hsc($data['users']['json']['display_name']).'</title>
-         <link>'.hsc($data['channels']['json']['url']).'</link>
-      </image>'.
-      $rss_items.'
-   </channel>
+    <channel>
+        <title>'.hsc('twitch.tv - '.$data['users']['json']['display_name']).'</title>
+        <description>'.hsc($data['users']['json']['bio']).'</description>
+        <pubDate>'.gmdate(DATE_RSS).'</pubDate>
+        <link>'.hsc($data['channels']['json']['url']).'</link>
+        <image>
+            <url>'.hsc($data['users']['json']['logo']).'</url>
+            <title>'.hsc($data['users']['json']['display_name']).'</title>
+            <link>'.hsc($data['channels']['json']['url']).'</link>
+        </image>'.
+        $rss_items.'
+    </channel>
 </rss>';
 
 
