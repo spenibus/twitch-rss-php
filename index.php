@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2015-08-01 08:36 +0000
+  update: 2016-05-09 20:03 +0000
 *******************************************************************************/
 
 
@@ -30,7 +30,7 @@ $CFG_LIMIT_DEFAULT = 30;
 
 /******************************************************************************/
 function hsc($str) {
-   return htmlspecialchars($str, ENT_COMPAT, 'UTF-8');
+    return htmlspecialchars($str, ENT_COMPAT, 'UTF-8');
 }
 
 
@@ -38,10 +38,10 @@ function hsc($str) {
 
 /******************************************************************************/
 function durationFormat($length=0) {
-   $h = floor($length/3600);
-   $m = floor($length%3600/60);
-   $s = $length%3600%60;
-   return sprintf('%02d:%02d:%02d', $h, $m, $s);
+    $h = floor($length/3600);
+    $m = floor($length%3600/60);
+    $s = $length%3600%60;
+    return sprintf('%02d:%02d:%02d', $h, $m, $s);
 }
 
 
@@ -50,136 +50,140 @@ function durationFormat($length=0) {
 /****************************************************** clean old cache files */
 function cacheClean() {
 
-   global $CFG_DIR_CACHE, $CFG_TIME;
+    global $CFG_DIR_CACHE, $CFG_TIME;
 
-   $d = opendir($CFG_DIR_CACHE);
-   while(false !== $fn = readdir($d)) {
+    $d = opendir($CFG_DIR_CACHE);
+    while(false !== $fn = readdir($d)) {
 
-      // file path
-      $fp = $CFG_DIR_CACHE.$fn;
+        // file path
+        $fp = $CFG_DIR_CACHE.$fn;
 
-      // check filename prefix
-      if(substr($fn,0,6) != 'cache-') {
-         continue;
-      }
+        // check filename prefix
+        if(substr($fn,0,6) != 'cache-') {
+            continue;
+        }
 
-      // file age
-      $age = $CFG_TIME - filemtime($fp);
+        // file age
+        $age = $CFG_TIME - filemtime($fp);
 
-      // file too fresh (less than a day)
-      if($age <= 86400) {
-         continue;
-      }
+        // file too fresh (less than a day)
+        if($age <= 86400) {
+            continue;
+        }
 
-      // all checks passed, file can be deleted
-      unlink($fp);
-   }
-   closedir($d);
+        // all checks passed, file can be deleted
+        unlink($fp);
+    }
+    closedir($d);
 }
 
 
 
 
 /***************************************************** fetch url (with cache) */
-function urlFetch($urls=array()) {
+function urlFetch(
+    $urls=array()  // list of urls
+    ,$data=array() // extra data
+) {
 
-   global $CFG_TIME, $CFG_DIR_CACHE, $CFG_CACHE_AGE_MAX;
-
-
-   // curl options
-   $curl_opts = array(
-      CURLOPT_TIMEOUT        => 20,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_SSL_VERIFYPEER => false,
-      CURLOPT_SSL_VERIFYHOST => false,
-      CURLOPT_HTTPHEADER     => array(
-         'Accept: application/vnd.twitchtv.v3+json',
-      ),
-   );
+    global $CFG_TIME, $CFG_DIR_CACHE, $CFG_CACHE_AGE_MAX;
 
 
-   // store curl handles
-   $curl_handles = array();
+    // curl options
+    $curl_opts = array(
+        CURLOPT_TIMEOUT        => 20,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_HTTPHEADER     => array(
+            'Accept: application/vnd.twitchtv.v3+json'
+            ,'Client-ID: '.$data['clientId'],
+        ),
+    );
 
 
-   // get cache or queue for fetch
-   foreach($urls as $id=>&$url) {
-
-      // cache: file name, file path, file age
-      $cfn = 'cache-'.sha1($url).'.txt.gz';
-      $cfp = $CFG_DIR_CACHE.$cfn;
-      $cfa = $CFG_TIME - (file_exists($cfp) ? filemtime($cfp) : 0);
+    // store curl handles
+    $curl_handles = array();
 
 
-      // update structure
-      $url = array(
-         'url' => $url,
-         'cfn' => $cfn,
-         'cfp' => $cfp,
-         'cfa' => $cfa,
-      );
+    // get cache or queue for fetch
+    foreach($urls as $id=>&$url) {
+
+        // cache: file name, file path, file age
+        $cfn = 'cache-'.sha1($url).'.txt.gz';
+        $cfp = $CFG_DIR_CACHE.$cfn;
+        $cfa = $CFG_TIME - (file_exists($cfp) ? filemtime($cfp) : 0);
 
 
-      // cache too old, create curl handle to renew
-      if($url['cfa'] > $CFG_CACHE_AGE_MAX) {
-         $curl_handles[$id] = curl_init($url['url']);
-         curl_setopt_array($curl_handles[$id], $curl_opts);
-      }
-   }
-   unset($url);
+        // update structure
+        $url = array(
+            'url' => $url,
+            'cfn' => $cfn,
+            'cfp' => $cfp,
+            'cfa' => $cfa,
+        );
 
 
-   // run curl, if necessary
-   if(count($curl_handles) > 0) {
+        // cache too old, create curl handle to renew
+        if($url['cfa'] > $CFG_CACHE_AGE_MAX) {
+            $curl_handles[$id] = curl_init($url['url']);
+            curl_setopt_array($curl_handles[$id], $curl_opts);
+        }
+    }
+    unset($url);
 
-      $curl = curl_multi_init();
 
-      foreach($curl_handles as $id=>$handle) {
-         curl_multi_add_handle($curl, $handle);
-      }
+    // run curl, if necessary
+    if(count($curl_handles) > 0) {
 
-      $curl_running = 1;
-      while($curl_running > 0) {
+        $curl = curl_multi_init();
 
-         curl_multi_exec($curl, $curl_running);
+        foreach($curl_handles as $id=>$handle) {
+            curl_multi_add_handle($curl, $handle);
+        }
 
-         curl_multi_select($curl, 2);
+        $curl_running = 1;
+        while($curl_running > 0) {
 
-         while($info = curl_multi_info_read($curl)) {
+            curl_multi_exec($curl, $curl_running);
 
-            $handle = $info['handle'];
+            curl_multi_select($curl, 2);
 
-            $id = array_search($handle, $curl_handles);
+            while($info = curl_multi_info_read($curl)) {
 
-            $info = curl_getinfo($handle);
+                $handle = $info['handle'];
 
-            $content = curl_multi_getcontent($handle);
+                $id = array_search($handle, $curl_handles);
 
-            if($info['http_code'] == 200 && $info['size_download'] > 0) {
-               file_put_contents($urls[$id]['cfp'], gzencode($content, 5));
+                $info = curl_getinfo($handle);
+
+                $content = curl_multi_getcontent($handle);
+
+                if($info['http_code'] == 200 && $info['size_download'] > 0) {
+                    file_put_contents($urls[$id]['cfp'], gzencode($content, 5));
+                }
             }
-         }
-      }
+        }
 
-      curl_multi_close($curl);
-   }
-
-
-   // retrieve content from cache
-   foreach($urls as $id=>&$url) {
-
-      $url['content'] = file_exists($url['cfp'])
-         ? implode(gzfile($url['cfp']))
-         : null;
-
-      $url['json'] = $url['content']
-         ? json_decode($url['content'], true)
-         : null;
-   }
-   unset($url);
+        curl_multi_close($curl);
+    }
 
 
-   return $urls;
+    // retrieve content from cache
+    foreach($urls as $id=>&$url) {
+
+        $url['content'] = file_exists($url['cfp'])
+            ? implode(gzfile($url['cfp']))
+            : null;
+
+        $url['json'] = $url['content']
+            ? json_decode($url['content'], true)
+            : null;
+    }
+    unset($url);
+
+
+    return $urls;
 }
 
 
@@ -188,32 +192,40 @@ function urlFetch($urls=array()) {
 /************************************************************** show rss feed */
 if($_GET['channel']) {
 
-   // params
-   $getChannel = $_GET['channel'];
-   $getLimit   = $_GET['limit'];
-   $getKey     = $_GET['key'];
+
+    // params
+    $getChannel  = $_GET['channel'];
+    $getLimit    = $_GET['limit'];
+    $getKey      = $_GET['key'];
 
 
-   // check for key (password)
-   $fileKey = $CFG_DIR_CONFIG.'key.txt';
-   if(is_file($fileKey)) {
-      $cfgKey = file_get_contents($fileKey);
-      if($getKey != $cfgKey) {
-         exit('key is invalid');
-      }
-   }
+    // get client id
+    $fileClientId = $CFG_DIR_CONFIG.'clientid.txt';
+    if(is_file($fileClientId)) {
+        $cfgClientId = file_get_contents($fileClientId);
+    }
 
 
-   // clean the cache
-   cacheClean();
+    // check for key (password)
+    $fileKey = $CFG_DIR_CONFIG.'key.txt';
+    if(is_file($fileKey)) {
+        $cfgKey = file_get_contents($fileKey);
+        if($getKey != $cfgKey) {
+            exit('key is invalid');
+        }
+    }
 
 
-   // url params
-   $paramChannel = urlencode($getChannel);
-   $paramLimit   = urlencode($getLimit != null
-      ? (int)$getLimit
-      : $CFG_LIMIT_DEFAULT
-   );
+    // clean the cache
+    cacheClean();
+
+
+    // url params
+    $paramChannel = urlencode($getChannel);
+    $paramLimit   = urlencode($getLimit != null
+        ? (int)$getLimit
+        : $CFG_LIMIT_DEFAULT
+    );
 
 
    // urls to fetch
@@ -222,12 +234,16 @@ if($_GET['channel']) {
       'users'    => "https://api.twitch.tv/kraken/users/$paramChannel",
       'videos'   => "https://api.twitch.tv/kraken/channels/$paramChannel/videos"
                    ."?limit=$paramLimit&offset=0&broadcasts=true",
-      'meh'      => "http://spenibus.net",
    );
 
 
     // fetch urls data
-    $data = urlFetch($urls);
+    $data = urlFetch(
+        $urls,
+        array(
+            'clientId' => $cfgClientId
+        )
+    );
 
 
     $rss_items = '';
@@ -285,9 +301,9 @@ Description: '.$video['description']).'</pre>
 </rss>';
 
 
-   // output
-   header('content-type: application/xml');
-   exit($rss);
+    // output
+    header('content-type: application/xml');
+    exit($rss);
 }
 
 
