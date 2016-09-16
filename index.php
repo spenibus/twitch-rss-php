@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2016-05-09 20:03 +0000
+  update: 2016-09-16 02:20 +0000
 *******************************************************************************/
 
 
@@ -24,6 +24,8 @@ $CFG_DIR_CONFIG = './config/';
 $CFG_CACHE_AGE_MAX = 300;
 
 $CFG_LIMIT_DEFAULT = 30;
+
+$CFG_CLIENT_ID = 'jzkbprff40iqj646a697cyrvl0zt2m6';
 
 
 
@@ -197,6 +199,10 @@ if($_GET['channel']) {
     $getChannel  = $_GET['channel'];
     $getLimit    = $_GET['limit'];
     $getKey      = $_GET['key'];
+
+
+    // default client id
+    $cfgClientId = $CFG_CLIENT_ID;
 
 
     // get client id
