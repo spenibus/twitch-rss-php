@@ -4,8 +4,8 @@ twitch-rss
 - [Website][1]
 
 - Repositories
-  - [GitHub][2]
-  - [GitLab][3]
+    - [GitHub][2]
+    - [GitLab][3]
 
 
 About
@@ -18,20 +18,25 @@ Usage
 -----
 
 - GET options
-    - channel  
-      name of the twitch channel
-    - limit  
-      max number of rss items to show
-    - key  
-      restricts the use of the script  
-      must match the content of `config/key.txt`  
-      you have to create the file "key.txt" yourself to enable this feature  
-      use a password of your choice  
-      ex: `?channel=gogcom&limit=10&key=topSecret`
+    - `channelid`  
+        id of the twitch channel  
+        used by api v5  
+        this has priority over `channel`  
+    - `channel`  
+        name of the twitch channel  
+        used by api v3 (deprecated after 2017-02-14)  
+    - `limit`  
+        max number of rss items to show  
+    - `key`  
+        restricts the use of the script  
+        must match the content of `config/key.txt`  
+        you have to create the file `key.txt` yourself to enable this feature  
+        use a password of your choice  
+        ex: `?channel=gogcom&limit=10&key=topSecret`  
 
 - Client ID  
-  put the client ID of the registered app in `config/clientid.txt`  
-  see [Client-ID required for Kraken API calls][4]
+    put the client ID of the registered app in `config/clientid.txt`  
+    see [Client-ID required for Kraken API calls][4]  
 
 
 [1]: http://spenibus.net

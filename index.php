@@ -2,7 +2,7 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2016-09-16 02:20 +0000
+  update: 2016-11-17 21:09 +0000
 *******************************************************************************/
 
 
@@ -91,6 +91,12 @@ function urlFetch(
     global $CFG_TIME, $CFG_DIR_CACHE, $CFG_CACHE_AGE_MAX;
 
 
+    // select api version
+    $apiVersion = $data['useV3']
+        ? 'Accept: application/vnd.twitchtv.v3+json'
+        : 'Accept: application/vnd.twitchtv.v5+json';
+
+
     // curl options
     $curl_opts = array(
         CURLOPT_TIMEOUT        => 20,
@@ -98,8 +104,8 @@ function urlFetch(
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_SSL_VERIFYHOST => false,
         CURLOPT_HTTPHEADER     => array(
-            'Accept: application/vnd.twitchtv.v3+json'
-            ,'Client-ID: '.$data['clientId'],
+            $apiVersion,
+            'Client-ID: '.$data['clientId'],
         ),
     );
 
@@ -192,13 +198,14 @@ function urlFetch(
 
 
 /************************************************************** show rss feed */
-if($_GET['channel']) {
+if($_GET['channelid'] || $_GET['channel']) {
 
 
     // params
-    $getChannel  = $_GET['channel'];
-    $getLimit    = $_GET['limit'];
-    $getKey      = $_GET['key'];
+    $getChannelid = $_GET['channelid'];
+    $getChannel   = $_GET['channel'];
+    $getLimit     = $_GET['limit'];
+    $getKey       = $_GET['key'];
 
 
     // default client id
@@ -226,30 +233,44 @@ if($_GET['channel']) {
     cacheClean();
 
 
-    // url params
-    $paramChannel = urlencode($getChannel);
-    $paramLimit   = urlencode($getLimit != null
+    /***
+    url params
+    ***/
+
+    $paramOptions = array(
+        'clientId' => $cfgClientId,
+        'useV3'    => false,
+    );
+
+
+    $paramChannel = urlencode($getChannelid);
+
+
+    // got username instead of id, revert to api v3
+    if($getChannel) {
+        $paramChannel = urlencode($getChannel);
+        $paramOptions['useV3'] = true;
+    }
+
+
+    // max number of returned items
+    $paramLimit = urlencode($getLimit != null
         ? (int)$getLimit
         : $CFG_LIMIT_DEFAULT
     );
 
 
-   // urls to fetch
-   $urls = array(
-      'channels' => "https://api.twitch.tv/kraken/channels/$paramChannel",
-      'users'    => "https://api.twitch.tv/kraken/users/$paramChannel",
-      'videos'   => "https://api.twitch.tv/kraken/channels/$paramChannel/videos"
-                   ."?limit=$paramLimit&offset=0&broadcasts=true",
-   );
+    // urls to fetch
+    $urls = array(
+        'channels' => "https://api.twitch.tv/kraken/channels/$paramChannel",
+        'users'    => "https://api.twitch.tv/kraken/users/$paramChannel",
+        'videos'   => "https://api.twitch.tv/kraken/channels/$paramChannel/videos"
+                     ."?limit=$paramLimit&offset=0&broadcasts=true",
+    );
 
 
     // fetch urls data
-    $data = urlFetch(
-        $urls,
-        array(
-            'clientId' => $cfgClientId
-        )
-    );
+    $data = urlFetch($urls, $paramOptions);
 
 
     $rss_items = '';
@@ -265,6 +286,11 @@ if($_GET['channel']) {
 
         // timestamp of recording start
         $startStamp = strtotime($video['recorded_at']);
+
+        // api v5 returns an array, v3 returns a url
+        $videoPreview = is_array($video['preview'])
+            ? $video['preview']['medium']
+            : $video['preview'];
 
         // build item
         $rss_items .= '
@@ -282,9 +308,9 @@ if($_GET['channel']) {
        Game: '.$video['game'].'
 Description: '.$video['description']).'</pre>
 
-<img src="'.$video['preview'].'" alt="preview"/>]]>'
+<img src="'.$videoPreview.'" alt="preview"/>]]>'
          ).'</description>
-            <media:thumbnail url="'.hsc($video['preview']).'"/>
+            <media:thumbnail url="'.hsc($videoPreview).'"/>
             <media:content url="" duration="'.hsc($video['length']).'"/>
         </item>';
     }
