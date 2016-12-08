@@ -207,6 +207,7 @@ if($_GET['channelid'] || $_GET['channel']) {
     $getLimit     = $_GET['limit'];
     $getKey       = $_GET['key'];
 
+    $getShowIdTitle = (bool)$_GET['showidtitle'];
 
     // default client id
     $cfgClientId = $CFG_CLIENT_ID;
@@ -295,7 +296,7 @@ if($_GET['channelid'] || $_GET['channel']) {
         // build item
         $rss_items .= '
         <item>
-            <title>'.hsc($video['title']).'</title>
+            <title>'.hsc(($getShowIdTitle ? '['.$video['_id'].'] ' : '').$video['title']).'</title>
             <link>'.hsc($video['url']).'</link>
             <pubDate>'.gmdate(DATE_RSS, $startStamp).'</pubDate>
             <description>'.(
