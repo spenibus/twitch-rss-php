@@ -33,6 +33,9 @@ Usage
         you have to create the file `key.txt` yourself to enable this feature  
         use a password of your choice  
         ex: `?channel=gogcom&limit=10&key=topSecret`  
+    - `showidtitle`  
+        puts the video id in the item title  
+        helps to easily identify video or spot duplicate  
 
 - Client ID  
     put the client ID of the registered app in `config/clientid.txt`  
