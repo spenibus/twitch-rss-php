@@ -2,7 +2,6 @@
 /*******************************************************************************
 twitch-rss
 creation: 2014-11-30 00:00 +0000
-  update: 2016-11-17 21:09 +0000
 *******************************************************************************/
 
 
@@ -16,6 +15,8 @@ mb_internal_encoding('utf-8');
 
 
 /******************************************************************************/
+$CFG_VERSION = '20161216.2243';
+
 $CFG_TIME = time();
 
 $CFG_DIR_CACHE  = './cache/';
@@ -266,7 +267,7 @@ if($_GET['channelid'] || $_GET['channel']) {
         'channels' => "https://api.twitch.tv/kraken/channels/$paramChannel",
         'users'    => "https://api.twitch.tv/kraken/users/$paramChannel",
         'videos'   => "https://api.twitch.tv/kraken/channels/$paramChannel/videos"
-                     ."?limit=$paramLimit&offset=0&broadcasts=true",
+                     ."?limit=$paramLimit&offset=0&broadcast_type=archive",
     );
 
 
@@ -278,6 +279,7 @@ if($_GET['channelid'] || $_GET['channel']) {
 
     foreach($data['videos']['json']['videos'] as $video) {
 
+        // debug
         //print_r($video);exit();
 
         // skip if video is still being recorded
@@ -301,9 +303,10 @@ if($_GET['channelid'] || $_GET['channel']) {
             <pubDate>'.gmdate(DATE_RSS, $startStamp).'</pubDate>
             <description>'.(
 '<![CDATA[<pre>'.hsc('   Video id: '.$video['_id'].'
-    Started: '.gmdate('Y-m-d H:i:s O', $startStamp).'
-   Duration: '.durationformat($video['length']).'
-     Status: '.$video['status'].'
+       Started: '.gmdate('Y-m-d H:i:s O', $startStamp).'
+      Duration: '.durationformat($video['length']).'
+Broadcast type: '.$video['broadcast_type'].'
+        Status: '.$video['status'].'
 
       Title: '.$video['title'].'
        Game: '.$video['game'].'
