@@ -203,12 +203,13 @@ if($_GET['channelid'] || $_GET['channel']) {
 
 
     // params
-    $getChannelid = $_GET['channelid'];
-    $getChannel   = $_GET['channel'];
-    $getLimit     = $_GET['limit'];
-    $getKey       = $_GET['key'];
+    $getChannelid  = $_GET['channelid'];
+    $getChannel    = $_GET['channel'];
+    $getLimit      = $_GET['limit'];
+    $getKey        = $_GET['key'];
 
     $getShowIdTitle = (bool)$_GET['showidtitle'];
+    $getStoryboard  = (bool)$_GET['storyboard'];
 
     // default client id
     $cfgClientId = $CFG_CLIENT_ID;
@@ -290,10 +291,20 @@ if($_GET['channelid'] || $_GET['channel']) {
         // timestamp of recording start
         $startStamp = strtotime($video['recorded_at']);
 
-        // api v5 returns an array, v3 returns a url
-        $videoPreview = is_array($video['preview'])
-            ? $video['preview']['medium']
-            : $video['preview'];
+        // use storyboard as preview
+        if(
+            $getStoryboard
+            && preg_match('/^(.*\/storyboards\/\d+)/i', $video['animated_preview_url'], $m)
+        ){
+            $videoPreview = $m[1].'-low-0.jpg';
+        }
+        // fallback
+        else {
+            // api v5 returns an array, v3 returns a url
+            $videoPreview = is_array($video['preview'])
+                ? $video['preview']['medium']
+                : $video['preview'];
+        }
 
         // build item
         $rss_items .= '
