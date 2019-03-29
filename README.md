@@ -37,8 +37,8 @@ Usage
         puts the video id in the item title  
         helps to easily identify video or spot duplicate  
     - `storyboard`  
-        replaces the preview image with the storyboard
-        gives a better overview of the video
+        replaces the preview image with the storyboard  
+        gives a better overview of the video  
 
 - Client ID  
     put the client ID of the registered app in `config/clientid.txt`  
