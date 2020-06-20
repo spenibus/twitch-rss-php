@@ -15,7 +15,7 @@ mb_internal_encoding('utf-8');
 
 
 /******************************************************************************/
-$CFG_VERSION = '20190329.0230';
+$CFG_VERSION = '20200620.2024';
 
 $CFG_TIME = time();
 
@@ -198,6 +198,29 @@ function urlFetch(
 
 
 
+/*************************************************************** error output */
+//******************************************************************************
+function rssError($msg) {
+    header('content-type: application/xml');
+    exit('<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+    <channel>
+        <title>Error</title>
+        <description></description>
+        <pubDate>'.gmdate(DATE_RSS).'</pubDate>
+        <link></link>
+        <title>ERROR - '.gmdate('Y-m-d H:i:s').' - '.hsc($msg).'</title>
+        <item>
+            <title>[ERROR]['.gmdate('Y-m-d H:i:s').'] '.hsc($msg).'</title>
+            <description>'.hsc($_SERVER['REQUEST_URI']).'</description>
+        </item>
+    </channel>
+</rss>');
+}
+
+
+
+
 /************************************************************** show rss feed */
 if($_GET['channelid'] || $_GET['channel']) {
 
@@ -239,7 +262,6 @@ if($_GET['channelid'] || $_GET['channel']) {
     /***
     url params
     ***/
-
     $paramOptions = array(
         'clientId' => $cfgClientId,
         'useV3'    => false,
@@ -249,12 +271,20 @@ if($_GET['channelid'] || $_GET['channel']) {
     $paramChannel = urlencode($getChannelid);
 
 
-    // got username instead of id, revert to api v3
+    // got username instead of id, get id
     if($getChannel) {
         $paramChannel = urlencode($getChannel);
-        $paramOptions['useV3'] = true;
+        $idData = urlFetch(
+             ['idData'=>'https://api.twitch.tv/kraken/users?login='.$paramChannel]
+            ,$paramOptions
+        );
+        $paramChannel = $idData['idData']['json']['users'][0]['_id'];
     }
 
+
+    if(!$paramChannel) {
+        rssError('No channel id found');
+    }
 
     // max number of returned items
     $paramLimit = urlencode($getLimit != null
@@ -274,7 +304,6 @@ if($_GET['channelid'] || $_GET['channel']) {
 
     // fetch urls data
     $data = urlFetch($urls, $paramOptions);
-
 
     $rss_items = '';
 
